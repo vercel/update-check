@@ -8,11 +8,14 @@
   },
   "repository": "zeit/update-check",
   "keywords": [
-      "update",
-      "notifications",
-      "checker",
-      "notifier"
+    "update",
+    "notifications",
+    "checker",
+    "notifier"
   ],
   "author": "leo",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "2.3.2"
+  }
 }
