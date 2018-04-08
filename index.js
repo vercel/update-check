@@ -1,31 +1,7 @@
-// Native
 const {get} = require('https');
 
+const compareVersions = (a, b) => a.localeCompare(b, 'en-US', { numeric: true });
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
-
-const compareVersions = (first, second) => {
-    const reduce = tag => tag.match(/\d+/g).map(Number);
-    const a = reduce(first);
-    const b = reduce(second);
-
-    return a.map((item, index) => {
-        return item === b[index] ? 0 : item > b[index] ? 1 : -1;
-    }).reduce((curr, next) => {
-        if (curr === -1 && (next === 0 || next === 1)) {
-            return -1;
-        }
-
-        if (curr === 1 && (next === -1 || next === 0)) {
-            return 1;
-        }
-
-        if (curr === 0 && next === 0) {
-            return 0;
-        }
-
-        return next;
-    });
-}
 
 const getMostRecent = async (name, distTag) => {
     const url = `https://registry.npmjs.org/${encode(name)}/${encode(distTag)}`;
