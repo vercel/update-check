@@ -165,7 +165,7 @@ module.exports = async (pkg, config) => {
 	const comparision = compareVersions(pkg.version, mostRecent.version);
 
 	if (comparision === -1) {
-		return mostRecent;
+		return mostRecent.version;
 	}
 
 	return null;
