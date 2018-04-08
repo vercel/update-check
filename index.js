@@ -1,8 +1,45 @@
 const {get} = require('https');
+const {join} = require('path');
+const fs = require('fs');
+const {promisify} = require('util');
 const {tmpdir} = require('os');
 
+const writeFile = promisify(fs.writeFile);
+const mkdir = promisify(fs.mkdir);
+const readFile = promisify(fs.readFile);
 const compareVersions = (a, b) => a.localeCompare(b, 'en-US', { numeric: true });
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
+
+const shouldCheck = async (name, interval) => {
+    const rootDir = tmpdir();
+    const subDir = join(rootDir, `update-check`);
+
+    if (!fs.existsSync(subDir)) {
+        mkdir(subDir);
+    }
+
+    const file = join(subDir, `${name}.json`);
+    const time = Date.now()
+
+    if (fs.existsSync(file)) {
+        const content = await readFile(file, 'utf8');
+        const {lastCheck} = JSON.parse(content);
+        const nextCheck = lastCheck + interval;
+
+        // As long as the time of the next check is in
+        // the future, we don't need to run it yet.
+        if (nextCheck > time) {
+            return false;
+        }
+    }
+
+    const content = JSON.stringify({
+        lastCheck: time
+    });
+
+    await writeFile(file, content, 'utf8');
+    return true;
+}
 
 const getMostRecent = async (name, distTag) => {
     const url = `https://registry.npmjs.org/${encode(name)}/${encode(distTag)}`;
@@ -50,10 +87,17 @@ const defaultConfig = {
 
 module.exports = async (pkg, config) => {
     if (typeof pkg !== 'object') {
-        throw new Error('The first parameter should be your package.json file content')
+        throw new Error('The first parameter should be your package.json file content');
     }
 
     const {distTag, interval} = Object.assign({}, defaultConfig, config);
+    const check = await shouldCheck(pkg.name, interval);
+
+    if (check === false) {
+        return null;
+    }
+    console.log('masklol')
+
     const mostRecent = await getMostRecent(pkg.name, distTag);
     const comparision = compareVersions(pkg.version, mostRecent.version);
 
