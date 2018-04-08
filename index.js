@@ -1,8 +1,13 @@
+// Native
 const {get} = require('https');
+const {URL} = require('url');
 const {join} = require('path');
 const fs = require('fs');
 const {promisify} = require('util');
 const {tmpdir} = require('os');
+
+// Packages
+const registryUrl = require('registry-url');
 
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
@@ -41,10 +46,21 @@ const shouldCheck = async (name, interval) => {
 	return true;
 };
 
-const getMostRecent = async (name, distTag) => {
-	const url = `https://registry.npmjs.org/${name}/${encode(distTag)}`;
+const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
+	const options = {
+		method: 'GET',
+		protocol: url.protocol,
+		host: url.hostname,
+		path: url.pathname
+	};
 
-	return new Promise((resolve, reject) => get(url, response => {
+	if (authInfo) {
+		options.headers = {
+			authorization: `${authInfo.type} ${authInfo.token}`
+		};
+	}
+
+	get(options, response => {
 		const {statusCode, headers} = response;
 		const contentType = headers['content-type'];
 
@@ -52,12 +68,13 @@ const getMostRecent = async (name, distTag) => {
 
 		if (statusCode !== 200) {
 			error = new Error(`Request failed with code ${statusCode}`);
+			error.code = statusCode;
 		} else if (!/^application\/json/.test(contentType)) {
 			error = new Error(`Expected application/json but received ${contentType}`);
 		}
 
 		if (error) {
-			reject(error.message);
+			reject(error);
 
 			// Consume response data to free up RAM
 			response.resume();
@@ -65,8 +82,8 @@ const getMostRecent = async (name, distTag) => {
 		}
 
 		let rawData = '';
-
 		response.setEncoding('utf8');
+
 		response.on('data', chunk => {
 			rawData += chunk;
 		});
@@ -76,10 +93,35 @@ const getMostRecent = async (name, distTag) => {
 				const parsedData = JSON.parse(rawData);
 				resolve(parsedData);
 			} catch (e) {
-				reject(e.message);
+				reject(e);
 			}
 		});
-	}).on('error', reject));
+	}).on('error', reject);
+});
+
+const getMostRecent = async (details, distTag) => {
+	const regURL = registryUrl(details.scope);
+
+	try {
+		// It's important to `await` here
+		const url = new URL(`${details.full}/${encode(distTag)}`, regURL);
+		return await loadPackage(url);
+	} catch (err) {
+		// We need to cover:
+		// 401 or 403 for when we don't have access
+		// 404 when the package is hidden
+		if (err.code && String(err.code).startsWith(4)) {
+			const registryAuthToken = require('registry-auth-token');
+			const authInfo = registryAuthToken(regURL, {recursive: true});
+
+			// For scoped packages, getting a certain dist tag is not supported
+			const url = new URL(details.full, regURL);
+
+			return loadPackage(url, authInfo);
+		}
+
+		throw err;
+	}
 };
 
 const defaultConfig = {
@@ -92,15 +134,32 @@ module.exports = async (pkg, config) => {
 		throw new Error('The first parameter should be your package.json file content');
 	}
 
-	const name = encode(pkg.name);
+	const details = {
+		full: encode(pkg.name)
+	};
+
+	if (pkg.name.includes('/')) {
+		const parts = pkg.name.split('/');
+
+		details.scope = parts[0];
+		details.name = parts[1];
+	} else {
+		details.scope = null;
+		details.name = pkg.name;
+	}
+
+	if (details.scope && config.distTag) {
+		throw new Error('For scoped packages, the npm registry does not support getting a certain tag');
+	}
+
 	const {distTag, interval} = Object.assign({}, defaultConfig, config);
-	const check = await shouldCheck(name, interval);
+	const check = await shouldCheck(details.full, interval);
 
 	if (check === false) {
 		return null;
 	}
 
-	const mostRecent = await getMostRecent(name, distTag);
+	const mostRecent = await getMostRecent(details, distTag);
 	const comparision = compareVersions(pkg.version, mostRecent.version);
 
 	if (comparision === -1) {
