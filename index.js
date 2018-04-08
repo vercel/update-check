@@ -1,4 +1,5 @@
 const {get} = require('https');
+const {tmpdir} = require('os');
 
 const compareVersions = (a, b) => a.localeCompare(b, 'en-US', { numeric: true });
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
@@ -42,7 +43,17 @@ const getMostRecent = async (name, distTag) => {
     }).on('error', reject));
 }
 
-module.exports = async (pkg, distTag = 'latest') => {
+const defaultConfig = {
+    interval: 3600000,
+    distTag: 'latest'
+}
+
+module.exports = async (pkg, config) => {
+    if (typeof pkg !== 'object') {
+        throw new Error('The first parameter should be your package.json file content')
+    }
+
+    const {distTag, interval} = Object.assign({}, defaultConfig, config);
     const mostRecent = await getMostRecent(pkg.name, distTag);
     const comparision = compareVersions(pkg.version, mostRecent.version);
 
