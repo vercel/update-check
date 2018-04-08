@@ -111,6 +111,8 @@ const getMostRecent = async (details, distTag) => {
 		// 401 or 403 for when we don't have access
 		// 404 when the package is hidden
 		if (err.code && String(err.code).startsWith(4)) {
+			// We only want to load this package for when we
+			// really need to use the token
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
