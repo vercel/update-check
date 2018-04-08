@@ -131,24 +131,30 @@ const defaultConfig = {
 	distTag: 'latest'
 };
 
+const getDetails = name => {
+	const spec = {
+		full: encode(name)
+	};
+
+	if (name.includes('/')) {
+		const parts = name.split('/');
+
+		spec.scope = parts[0];
+		spec.name = parts[1];
+	} else {
+		spec.scope = null;
+		spec.name = name;
+	}
+
+	return spec;
+};
+
 module.exports = async (pkg, config) => {
 	if (typeof pkg !== 'object') {
 		throw new Error('The first parameter should be your package.json file content');
 	}
 
-	const details = {
-		full: encode(pkg.name)
-	};
-
-	if (pkg.name.includes('/')) {
-		const parts = pkg.name.split('/');
-
-		details.scope = parts[0];
-		details.name = parts[1];
-	} else {
-		details.scope = null;
-		details.name = pkg.name;
-	}
+	const details = getDetails(pkg.name);
 
 	if (details.scope && config.distTag) {
 		throw new Error('For scoped packages, the npm registry does not support getting a certain tag');
