@@ -35,11 +35,22 @@ if (update) {
 
 That's it! You're done.
 
-If you want, you can also pass a [distribution tag](https://docs.npmjs.com/cli/dist-tag) (`latest` is the default):
+### Configuration
+
+If you want, you can also pass options to customize the package's behavior:
 
 ```js
 const pkg = require('./package')
-const update = require('update-check')(pkg, 'canary')
+const checkForUpdate = require('update-check')
+
+const update = checkForUpdate(pkg, {
+    interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
+    distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
+})
+
+if (update) {
+    console.log(`The latest version is ${update.version}. Please update!`)
+}
 ```
 
 ## Contributing
