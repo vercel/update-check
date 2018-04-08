@@ -1,9 +1,8 @@
 # update-check 
 
-This package makes it very easy to implement update notifications like this
-one:
+This is a very minimal approach to update checking for [globally installed](https://docs.npmjs.com/getting-started/installing-npm-packages-globally) packages.
 
-<img width="900" alt="screen shot 2018-01-12 at 15 01 33" src="https://user-images.githubusercontent.com/6170607/34878177-8b2aa826-f7a9-11e7-90df-2c3c7f02a774.png">
+Because it's so simple, the error surface is very tiny and your user's are guaranteed to receive the update message if there's a new version.
 
 ## Usage
 
@@ -19,28 +18,26 @@ yarn add update-check
 npm install update-check
 ```
 
-Next, initialize it:
+Next, initialize it.
+
+If there's a new update available, the package will return the content of latest version's `package.json` file:
 
 ```js
 const pkg = require('./package')
-const updateCheck = require('update-check')
+const update = require('update-check')(pkg)
 
-updateCheck(pkg)
+if (update) {
+    console.log(`The latest version is ${update.version}. Please update!`)
+}
 ```
 
 That's it! You're done.
 
-If you want, you can pass options for configuring the update notifications:
+If you want, you can also pass a [distribution tag](https://docs.npmjs.com/cli/dist-tag) (`latest` is the default):
 
 ```js
-const {bgCyan} = require('chalk')
-
-updateCheck(pkg, {
-    name: 'Now CLI',        // The name of your package (empty by default)
-    interval: 3600000,      // For how long the latest version should be cached (default: 1 day)
-    distTag: 'canary',      // A npm distribution tag to compare the version to (default: 'latest')
-    color: bgCyan           // A `chalk` function for the message prefix (default: `bgCyan`)
-})
+const pkg = require('./package')
+const update = require('update-check')(pkg, 'canary')
 ```
 
 ## Contributing
