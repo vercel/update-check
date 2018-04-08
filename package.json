@@ -2,7 +2,7 @@
   "name": "update-check",
   "version": "0.1.0",
   "description": "Minimalistic update notifications for command line interfaces",
-  "main": "src/index.js",
+  "main": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
