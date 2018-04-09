@@ -4,8 +4,6 @@ This is a very minimal approach to update checking for [globally installed](http
 
 Because it's so simple, the error surface is very tiny and your user's are guaranteed to receive the update message if there's a new version.
 
-To reduce the bootup time to a minimum, no dependencies and the tiniest amount of code possible is used.
-
 ## Usage
 
 Firstly, install the package with [yarn](https://yarnpkg.com/en/)...
@@ -29,7 +27,7 @@ const pkg = require('./package')
 const update = require('update-check')(pkg)
 
 if (update) {
-    console.log(`The latest version is ${update.version}. Please update!`)
+    console.log(`The latest version is ${update.latest}. Please update!`)
 }
 ```
 
@@ -49,7 +47,7 @@ const update = checkForUpdate(pkg, {
 })
 
 if (update) {
-    console.log(`The latest version is ${update.version}. Please update!`)
+    console.log(`The latest version is ${update.latest}. Please update!`)
 }
 ```
 
