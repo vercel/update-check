@@ -189,7 +189,10 @@ module.exports = async (pkg, config) => {
 	const comparision = compareVersions(pkg.version, latest);
 
 	if (comparision === -1) {
-		return latest;
+		return {
+			latest,
+			fromCache: !shouldCheck
+		};
 	}
 
 	return null;
