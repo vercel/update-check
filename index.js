@@ -127,10 +127,11 @@ const getMostRecent = async ({full, scope}, distTag) => {
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
-			({version} = loadPackage(url, authInfo));
+			const spec = await loadPackage(url, authInfo);
+			version = spec['dist-tags'].latest;
+		} else {
+			throw err;
 		}
-
-		throw err;
 	}
 
 	return version;
