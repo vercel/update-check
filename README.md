@@ -4,6 +4,8 @@ This is a very minimal approach to update checking for [globally installed](http
 
 Because it's so simple, the error surface is very tiny and your user's are guaranteed to receive the update message if there's a new version.
 
+You can read more about the reasoning behind this project [here](https://twitter.com/notquiteleo/status/983193273224200192).
+
 ## Usage
 
 Firstly, install the package with [yarn](https://yarnpkg.com/en/)...
