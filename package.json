@@ -1,6 +1,6 @@
 {
   "name": "update-check",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Minimalistic update notifications for command line interfaces",
   "main": "./index.js",
   "scripts": {
