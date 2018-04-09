@@ -15,54 +15,60 @@ const readFile = promisify(fs.readFile);
 const compareVersions = (a, b) => a.localeCompare(b, 'en-US', {numeric: true});
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
 
-const shouldCheck = async (name, interval) => {
+const getFile = async (details, distTag) => {
 	const rootDir = tmpdir();
-	const subDir = join(rootDir, `update-check`);
+	const subDir = join(rootDir, 'update-check');
 
 	if (!fs.existsSync(subDir)) {
 		mkdir(subDir);
 	}
 
-	const file = join(subDir, `${name}.json`);
-	const time = Date.now();
+	let name = `${details.name}-${distTag}.json`;
 
+	if (details.scope) {
+		name = `${details.scope}-${name}`;
+	}
+
+	return join(subDir, name);
+};
+
+const evaluateCache = async (file, time, interval) => {
 	if (fs.existsSync(file)) {
 		const content = await readFile(file, 'utf8');
-		const {lastCheck} = JSON.parse(content);
-		const nextCheck = lastCheck + interval;
+		const {lastUpdate, latest} = JSON.parse(content);
+		const nextCheck = lastUpdate + interval;
 
 		// As long as the time of the next check is in
 		// the future, we don't need to run it yet.
 		if (nextCheck > time) {
-			return false;
+			return {
+				shouldCheck: false,
+				latest
+			};
 		}
 	}
 
+	return {
+		shouldCheck: true,
+		latest: null
+	};
+};
+
+const updateCache = async (file, latest, lastUpdate) => {
 	const content = JSON.stringify({
-		lastCheck: time
+		latest,
+		lastUpdate
 	});
 
 	await writeFile(file, content, 'utf8');
-	return true;
 };
 
-const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
-	const options = {
-		method: 'GET',
-		protocol: url.protocol,
-		host: url.hostname,
-		path: url.pathname
-	};
-
-	if (authInfo) {
-		options.headers = {
-			authorization: `${authInfo.type} ${authInfo.token}`
-		};
-	}
-
-	get(options, response => {
+const loadPackage = url => new Promise((resolve, reject) => {
+	const request = get(url, response => {
 		const {statusCode, headers} = response;
 		const contentType = headers['content-type'];
+
+		console.log(headers);
 
 		let error = null;
 
@@ -96,16 +102,20 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 				reject(e);
 			}
 		});
-	}).on('error', reject);
+	});
+
+	request.on('error', reject);
 });
 
-const getMostRecent = async (details, distTag) => {
-	const regURL = registryUrl(details.scope);
+const getMostRecent = async ({full, scope}, distTag) => {
+	const regURL = registryUrl(scope);
+
+	// For scoped packages, getting a certain dist tag is not supported
+	const {href} = new URL(scope ? full : `${full}/${encode(distTag)}`, regURL);
+	let version = null;
 
 	try {
-		// It's important to `await` here
-		const url = new URL(`${details.full}/${encode(distTag)}`, regURL);
-		return await loadPackage(url);
+		({version} = await loadPackage(href));
 	} catch (err) {
 		// We need to cover:
 		// 401 or 403 for when we don't have access
@@ -116,14 +126,13 @@ const getMostRecent = async (details, distTag) => {
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
-			// For scoped packages, getting a certain dist tag is not supported
-			const url = new URL(details.full, regURL);
-
-			return loadPackage(url, authInfo);
+			({version} = loadPackage(href, authInfo));
 		}
 
 		throw err;
 	}
+
+	return version;
 };
 
 const defaultConfig = {
@@ -160,18 +169,26 @@ module.exports = async (pkg, config) => {
 		throw new Error('For scoped packages, the npm registry does not support getting a certain tag');
 	}
 
+	const time = Date.now();
 	const {distTag, interval} = Object.assign({}, defaultConfig, config);
-	const check = await shouldCheck(details.full, interval);
+	const file = await getFile(details, distTag);
 
-	if (check === false) {
-		return null;
+	let latest = null;
+	let shouldCheck = true;
+
+	({shouldCheck, latest} = await evaluateCache(file, time, interval));
+
+	if (shouldCheck) {
+		latest = await getMostRecent(details, distTag);
+
+		// If we pulled an update, we need to update the cache
+		await updateCache(file, latest, time);
 	}
 
-	const mostRecent = await getMostRecent(details, distTag);
-	const comparision = compareVersions(pkg.version, mostRecent.version);
+	const comparision = compareVersions(pkg.version, latest);
 
 	if (comparision === -1) {
-		return mostRecent.version;
+		return latest;
 	}
 
 	return null;
