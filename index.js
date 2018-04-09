@@ -39,7 +39,7 @@ const evaluateCache = async (file, time, interval) => {
 		const nextCheck = lastUpdate + interval;
 
 		// As long as the time of the next check is in
-		// the future, we don't need to run it yet.
+		// the future, we don't need to run it yet
 		if (nextCheck > time) {
 			return {
 				shouldCheck: false,
@@ -63,8 +63,19 @@ const updateCache = async (file, latest, lastUpdate) => {
 	await writeFile(file, content, 'utf8');
 };
 
-const loadPackage = url => new Promise((resolve, reject) => {
-	const request = get(url, response => {
+const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
+	const options = {
+		host: url.hostname,
+		path: url.pathname
+	};
+
+	if (authInfo) {
+		options.headers = {
+			Authorization: `${authInfo.type} ${authInfo.token}`
+		};
+	}
+
+	get(options, response => {
 		const {statusCode, headers} = response;
 		const contentType = headers['content-type'];
 
@@ -102,20 +113,18 @@ const loadPackage = url => new Promise((resolve, reject) => {
 				reject(e);
 			}
 		});
-	});
-
-	request.on('error', reject);
+	}).on('error', reject);
 });
 
 const getMostRecent = async ({full, scope}, distTag) => {
 	const regURL = registryUrl(scope);
 
 	// For scoped packages, getting a certain dist tag is not supported
-	const {href} = new URL(scope ? full : `${full}/${encode(distTag)}`, regURL);
+	const url = new URL(scope ? full : `${full}/${encode(distTag)}`, regURL);
 	let version = null;
 
 	try {
-		({version} = await loadPackage(href));
+		({version} = await loadPackage(url));
 	} catch (err) {
 		// We need to cover:
 		// 401 or 403 for when we don't have access
@@ -126,7 +135,7 @@ const getMostRecent = async ({full, scope}, distTag) => {
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
-			({version} = loadPackage(href, authInfo));
+			({version} = loadPackage(url, authInfo));
 		}
 
 		throw err;
