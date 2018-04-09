@@ -77,21 +77,12 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	}
 
 	get(options, response => {
-		const {statusCode, headers} = response;
-		const contentType = headers['content-type'];
-
-		console.log(headers);
-
-		let error = null;
+		const {statusCode} = response;
 
 		if (statusCode !== 200) {
-			error = new Error(`Request failed with code ${statusCode}`);
+			const error = new Error(`Request failed with code ${statusCode}`);
 			error.code = statusCode;
-		} else if (!/^application\/json/.test(contentType)) {
-			error = new Error(`Expected application/json but received ${contentType}`);
-		}
 
-		if (error) {
 			reject(error);
 
 			// Consume response data to free up RAM
