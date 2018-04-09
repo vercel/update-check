@@ -66,13 +66,14 @@ const updateCache = async (file, latest, lastUpdate) => {
 const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	const options = {
 		host: url.hostname,
-		path: url.pathname
+		path: url.pathname,
+		headers: {
+			accept: 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*'
+		}
 	};
 
 	if (authInfo) {
-		options.headers = {
-			Authorization: `${authInfo.type} ${authInfo.token}`
-		};
+		options.headers.authorization = `${authInfo.type} ${authInfo.token}`;
 	}
 
 	get(options, response => {
