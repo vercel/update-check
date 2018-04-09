@@ -110,13 +110,12 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 
 const getMostRecent = async ({full, scope}, distTag) => {
 	const regURL = registryUrl(scope);
+	const url = new URL(full, regURL);
 
-	// For scoped packages, getting a certain dist tag is not supported
-	const url = new URL(scope ? full : `${full}/${encode(distTag)}`, regURL);
-	let version = null;
+	let spec = null;
 
 	try {
-		({version} = await loadPackage(url));
+		spec = await loadPackage(url);
 	} catch (err) {
 		// We need to cover:
 		// 401 or 403 for when we don't have access
@@ -127,11 +126,16 @@ const getMostRecent = async ({full, scope}, distTag) => {
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
-			const spec = await loadPackage(url, authInfo);
-			version = spec['dist-tags'].latest;
+			spec = await loadPackage(url, authInfo);
 		} else {
 			throw err;
 		}
+	}
+
+	const version = spec['dist-tags'][distTag];
+
+	if (!version) {
+		throw new Error(`Distribution tag ${distTag} is not available`);
 	}
 
 	return version;
@@ -166,11 +170,6 @@ module.exports = async (pkg, config) => {
 	}
 
 	const details = getDetails(pkg.name);
-
-	if (details.scope && config.distTag) {
-		throw new Error('For scoped packages, the npm registry does not support getting a certain tag');
-	}
-
 	const time = Date.now();
 	const {distTag, interval} = Object.assign({}, defaultConfig, config);
 	const file = await getFile(details, distTag);
