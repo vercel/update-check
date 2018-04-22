@@ -26,7 +26,9 @@ If there's a new update available, the package will return the content of latest
 
 ```js
 const pkg = require('./package')
-const update = require('update-check')(pkg)
+const checkForUpdate = require('update-check')
+
+const update = await checkForUpdate(pkg)
 
 if (update) {
     console.log(`The latest version is ${update.latest}. Please update!`)
@@ -43,7 +45,7 @@ If you want, you can also pass options to customize the package's behavior:
 const pkg = require('./package')
 const checkForUpdate = require('update-check')
 
-const update = checkForUpdate(pkg, {
+const update = await checkForUpdate(pkg, {
     interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
     distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
 })
