@@ -1,5 +1,4 @@
 // Native
-const {get} = require('https');
 const {URL} = require('url');
 const {join} = require('path');
 const fs = require('fs');
@@ -76,6 +75,7 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 		options.headers.authorization = `${authInfo.type} ${authInfo.token}`;
 	}
 
+	const {get} = require(url.protocol === 'https:' ? 'https' : 'http');
 	get(options, response => {
 		const {statusCode} = response;
 
