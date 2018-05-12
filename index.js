@@ -66,6 +66,7 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	const options = {
 		host: url.hostname,
 		path: url.pathname,
+		port: url.port,
 		headers: {
 			accept: 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*'
 		}
