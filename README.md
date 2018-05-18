@@ -55,8 +55,8 @@ let update = null;
 
 try {
 	update = await checkForUpdate(pkg, {
-		interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
-		distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
+		interval: 3600000,  // For how long to cache latest version (default: 1 day)
+		distTag: 'canary'   // A npm distribution tag for comparision (default: 'latest')
 	});
 } catch (err) {
 	console.error(`Failed to check for updates: ${err}`);
