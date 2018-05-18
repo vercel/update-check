@@ -33,11 +33,11 @@ let update = null;
 try {
 	update = await checkForUpdate(pkg);
 } catch (err) {
-    console.error(`Failed to check for updates: ${err}`);
+	console.error(`Failed to check for updates: ${err}`);
 }
 
 if (update) {
-    console.log(`The latest version is ${update.latest}. Please update!`);
+	console.log(`The latest version is ${update.latest}. Please update!`);
 }
 ```
 
@@ -55,15 +55,15 @@ let update = null;
 
 try {
 	update = await checkForUpdate(pkg, {
-    	interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
-    	distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
+		interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
+		distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
 	});
 } catch (err) {
 	console.error(`Failed to check for updates: ${err}`);
 }
 
 if (update) {
-    console.log(`The latest version is ${update.latest}. Please update!`);
+	console.log(`The latest version is ${update.latest}. Please update!`);
 }
 ```
 
