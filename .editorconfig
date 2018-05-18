@@ -24,6 +24,8 @@ indent_size = 8
 
 [*.md]
 trim_trailing_whitespace = false
+indent_size = 2
+tab_width = 2
 
 # Ideal settings - some plugins might support these.
 [*.js]
