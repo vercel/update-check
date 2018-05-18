@@ -25,13 +25,19 @@ Next, initialize it.
 If there's a new update available, the package will return the content of latest version's `package.json` file:
 
 ```js
-const pkg = require('./package')
-const checkForUpdate = require('update-check')
+const pkg = require('./package');
+const checkForUpdate = require('update-check');
 
-const update = await checkForUpdate(pkg)
+let update = null;
+
+try {
+	update = await checkForUpdate(pkg);
+} catch (err) {
+	console.error(`Failed to check for updates: ${err}`);
+}
 
 if (update) {
-    console.log(`The latest version is ${update.latest}. Please update!`)
+	console.log(`The latest version is ${update.latest}. Please update!`);
 }
 ```
 
@@ -42,16 +48,22 @@ That's it! You're done.
 If you want, you can also pass options to customize the package's behavior:
 
 ```js
-const pkg = require('./package')
-const checkForUpdate = require('update-check')
+const pkg = require('./package');
+const checkForUpdate = require('update-check');
 
-const update = await checkForUpdate(pkg, {
-    interval: 3600000,  // For how long the latest version should be cached (default: 1 day)
-    distTag: 'canary'   // A npm distribution tag to compare the version to (default: 'latest')
-})
+let update = null;
+
+try {
+	update = await checkForUpdate(pkg, {
+		interval: 3600000,  // For how long to cache latest version (default: 1 day)
+		distTag: 'canary'   // A npm distribution tag for comparision (default: 'latest')
+	});
+} catch (err) {
+	console.error(`Failed to check for updates: ${err}`);
+}
 
 if (update) {
-    console.log(`The latest version is ${update.latest}. Please update!`)
+	console.log(`The latest version is ${update.latest}. Please update!`);
 }
 ```
 
