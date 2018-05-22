@@ -69,7 +69,8 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 		port: url.port,
 		headers: {
 			accept: 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*'
-		}
+		},
+		timeout: 2000
 	};
 
 	if (authInfo) {
@@ -106,7 +107,7 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 				reject(e);
 			}
 		});
-	}).on('error', reject);
+	}).on('error', reject).on('timeout', reject);
 });
 
 const getMostRecent = async ({full, scope}, distTag) => {
