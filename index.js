@@ -7,7 +7,7 @@ const {tmpdir} = require('os');
 
 // Packages
 const registryUrl = require('registry-url');
-const ProxyAgent = require('https-proxy-agent')
+const ProxyAgent = require('https-proxy-agent');
 
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
