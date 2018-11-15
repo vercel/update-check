@@ -15,6 +15,12 @@ const readFile = promisify(fs.readFile);
 const compareVersions = (a, b) => a.localeCompare(b, 'en-US', {numeric: true});
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
 
+const proxyAddress = process.env.http_proxy
+  || process.env.HTTP_PROXY
+  || process.env.https_proxy
+  || process.env.HTTPS_PROXY;
+const proxyAgent = proxyAddress ? new ProxyAgent(proxyAddress) : undefined;
+
 const getFile = async (details, distTag) => {
 	const rootDir = tmpdir();
 	const subDir = join(rootDir, 'update-check');
@@ -65,7 +71,7 @@ const updateCache = async (file, latest, lastUpdate) => {
 
 const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	const options = {
-		agent: new ProxyAgent(),
+		agent: proxyAgent,
 		host: url.hostname,
 		path: url.pathname,
 		port: url.port,
