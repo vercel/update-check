@@ -7,19 +7,13 @@ const {tmpdir} = require('os');
 
 // Packages
 const registryUrl = require('registry-url');
-const ProxyAgent = require('https-proxy-agent');
+const ProxyAgent = require('proxy-agent');
 
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
 const readFile = promisify(fs.readFile);
 const compareVersions = (a, b) => a.localeCompare(b, 'en-US', {numeric: true});
 const encode = value => encodeURIComponent(value).replace(/^%40/, '@');
-
-const proxyAddress = process.env.https_proxy
-	|| process.env.HTTPS_PROXY
-	|| process.env.http_proxy
-	|| process.env.HTTP_PROXY;
-const proxyAgent = proxyAddress ? new ProxyAgent(proxyAddress) : undefined;
 
 const getFile = async (details, distTag) => {
 	const rootDir = tmpdir();
@@ -71,7 +65,7 @@ const updateCache = async (file, latest, lastUpdate) => {
 
 const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	const options = {
-		agent: proxyAgent,
+		agent: new ProxyAgent(),
 		host: url.hostname,
 		path: url.pathname,
 		port: url.port,
