@@ -19,7 +19,7 @@ const getFile = async (details, distTag) => {
 	const subDir = join(rootDir, 'update-check');
 
 	if (!fs.existsSync(subDir)) {
-		mkdir(subDir);
+		await mkdir(subDir);
 	}
 
 	let name = `${details.name}-${distTag}.json`;
