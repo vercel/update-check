@@ -107,7 +107,7 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 				reject(e);
 			}
 		});
-	}).on('error', reject).on('timeout', reject);
+	}).on('error', reject).on('timeout', () => reject(new Error('Request timeout')));
 });
 
 const getMostRecent = async ({full, scope}, distTag) => {
