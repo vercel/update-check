@@ -62,7 +62,7 @@ const updateCache = async (file, latest, lastUpdate) => {
 	await writeFile(file, content, 'utf8');
 };
 
-const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
+const loadPackage = ({url, timeout}, authInfo) => new Promise((resolve, reject) => {
 	const options = {
 		host: url.hostname,
 		path: url.pathname,
@@ -70,7 +70,7 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 		headers: {
 			accept: 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*'
 		},
-		timeout: 2000
+		timeout,
 	};
 
 	if (authInfo) {
@@ -110,14 +110,14 @@ const loadPackage = (url, authInfo) => new Promise((resolve, reject) => {
 	}).on('error', reject).on('timeout', () => reject(new Error('Request timeout')));
 });
 
-const getMostRecent = async ({full, scope}, distTag) => {
+const getMostRecent = async ({full, scope}, distTag, timeout) => {
 	const regURL = registryUrl(scope);
 	const url = new URL(full, regURL);
 
 	let spec = null;
 
 	try {
-		spec = await loadPackage(url);
+		spec = await loadPackage({url, timeout});
 	} catch (err) {
 		// We need to cover:
 		// 401 or 403 for when we don't have access
@@ -128,7 +128,7 @@ const getMostRecent = async ({full, scope}, distTag) => {
 			const registryAuthToken = require('registry-auth-token');
 			const authInfo = registryAuthToken(regURL, {recursive: true});
 
-			spec = await loadPackage(url, authInfo);
+			spec = await loadPackage({url, timeout}, authInfo);
 		} else {
 			throw err;
 		}
@@ -145,7 +145,8 @@ const getMostRecent = async ({full, scope}, distTag) => {
 
 const defaultConfig = {
 	interval: 3600000,
-	distTag: 'latest'
+	distTag: 'latest',
+	timeout: 2000
 };
 
 const getDetails = name => {
@@ -173,7 +174,7 @@ module.exports = async (pkg, config) => {
 
 	const details = getDetails(pkg.name);
 	const time = Date.now();
-	const {distTag, interval} = Object.assign({}, defaultConfig, config);
+	const {distTag, interval, timeout} = Object.assign({}, defaultConfig, config);
 	const file = await getFile(details, distTag);
 
 	let latest = null;
@@ -182,7 +183,7 @@ module.exports = async (pkg, config) => {
 	({shouldCheck, latest} = await evaluateCache(file, time, interval));
 
 	if (shouldCheck) {
-		latest = await getMostRecent(details, distTag);
+		latest = await getMostRecent(details, distTag, timeout);
 
 		// If we pulled an update, we need to update the cache
 		await updateCache(file, latest, time);
