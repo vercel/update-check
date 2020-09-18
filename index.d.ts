@@ -4,6 +4,9 @@ export interface Config {
 
 	/** An npm distribution tag for comparision (default: 'latest') */
 	distTag?: string;
+
+	/** Allows to set timeout for the request */
+	timeout?: number;
 }
 
 export interface Result {
