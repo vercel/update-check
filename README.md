@@ -78,5 +78,5 @@ if (update) {
 
 ## Author
 
-Leo Lamprecht ([@notquiteleo](https://twitter.com/notquiteleo)) - [ZEIT](https://zeit.co)
+Leo Lamprecht ([@notquiteleo](https://x.com/leo)) - [Vercel](https://vercel.com)
 
